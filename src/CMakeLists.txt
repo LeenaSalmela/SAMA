@@ -1,7 +1,7 @@
 add_executable(mytox main.cpp settings.cpp dbgraph.cpp dsnode.cpp
                kmernpp.cpp util.cpp debug.cpp coverage.cpp alignment.cpp
                graphaln.cpp refcomp.cpp correctgraph.cpp crfmult.cpp
-               readaln.cpp)
+               readaln.cpp threshold.cpp)
 
 target_link_libraries(mytox readfile kmer pgm pthread libdai gmp)
 

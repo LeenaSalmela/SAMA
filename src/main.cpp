@@ -24,6 +24,7 @@
 #include "refcomp.h"
 #include "crfmult.h"
 #include "readaln.h"
+#include "threshold.h"
 
 using namespace std;
 
@@ -486,7 +487,9 @@ void stageAssemble(Settings& settings)
   }
 
   // Read the thresholds
-
+  Thresholds th;
+  th.readThresholds(settings.getThresholdFilename());
+  
   // Examine each arc and remove it if it does not meet the threshold
 
   // Generate unitigs
