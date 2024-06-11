@@ -569,7 +569,7 @@ void stageAssemble(Settings& settings)
   for(int i = 0; i < dBG.getNumNodes(); i++) {
     SSNode start = nodes[i];
     //std::cout << start.getAvgCov() << std::endl;
-    if (!start.getFlag1()) {
+    if (!start.getFlag1() && start.getAvgCov() >= th.get((int)start.getAvgCov())) {
       start.setFlag1(true);
       vector<NodeID> nodeSeq;
       string contig;
@@ -585,9 +585,11 @@ void stageAssemble(Settings& settings)
 	  if (ait->getCov() >= th.get((int)dBG.getSSNode(current.getNodeID()).getAvgCov())) {
 	    current = dBG.getSSNode(ait->getNodeID());
 	    current.setFlag1(true);
-	    nodeSeq.push_back(ait->getNodeID());
-	    found = true;
-	    break;
+	    if (current.getAvgCov() >= th.get((int)current.getAvgCov())) {
+	      nodeSeq.push_back(ait->getNodeID());
+	      found = true;
+	      break;
+	    }
 	  }
 	}
       }
@@ -605,13 +607,15 @@ void stageAssemble(Settings& settings)
 	  if (ait->getCov() >= th.get((int)dBG.getSSNode(current.getNodeID()).getAvgCov())) {
 	    current = dBG.getSSNode(ait->getNodeID());
 	    current.setFlag1(true);
-	    nodeSeq.push_back(ait->getNodeID());
-	    found = true;
-	    break;
+	    if (current.getAvgCov() >= th.get((int)current.getAvgCov())) {
+	      nodeSeq.push_back(ait->getNodeID());
+	      found = true;
+	      break;
+	    }
 	  }
 	}
       }
-
+ 
       /*
       for(auto it = nodeSeq.begin(); it != nodeSeq.end(); ++it) {
 	std::cout << " " << *it << " (" << dBG.getSSNode(*it).getAvgCov() << ")";
