@@ -478,6 +478,10 @@ void stageTwo(Settings& settings)
         cout << "Stage 2 finished in " << Util::stopChronoStr() << endl;
 }
 
+bool compareNodes(SSNode n1, SSNode n2) {
+  return (n1.getAvgCov() < n2.getAvgCov());
+}
+
 void stageAssemble(Settings& settings)
 {
   if (!Util::fileExists(settings.getThresholdFilename())) {
@@ -486,13 +490,146 @@ void stageAssemble(Settings& settings)
     return;
   }
 
+  cout << "\nEntering stage assemble\n";
+  cout << "=======================\n" << endl;
+
+
   // Read the thresholds
   Thresholds th;
   th.readThresholds(settings.getThresholdFilename());
   
+  DBGraph dBG(settings);
+  string ifn = settings.getStage1GraphFilename();
+  cout << "Loading graph from file: " << ifn << "..."; cout.flush();
+  Util::startChrono();
+  dBG.loadBinary(ifn);
+  
+  cout << "\n\tLoaded " << dBG.getNumNodes() << " nodes and "
+       << dBG.getNumArcs() << " arcs (" << Util::stopChronoStr() << ")\n";
+
+  double nodeCutoff= 4.9;
+  vector<NodeRep> nodeReps = dBG.getLowCovNodes(nodeCutoff);
+  cout << "Selected " << nodeReps.size()
+       << " nodes with coverage <= " << nodeCutoff << endl;
+
+  dBG.removeNodes(nodeReps);
+  dBG.concatenateNodes();
+
   // Examine each arc and remove it if it does not meet the threshold
+  std::vector<EdgeRep> edges = dBG.getEdgeReps(dBG.getNumValidArcs());
+  vector<EdgeRep> edgesToRemove;
+  for (size_t i = 0; i < edges.size(); i++) {
+    NodeID srcID = edges[i].getSrcID();
+    NodeID dstID = edges[i].getDstID();
+    Arc arc = dBG.getArc(edges[i]);
+    if (arc.isValid()) {
+      if (arc.getCov() >= th.get((int)dBG.getSSNode(srcID).getAvgCov())) {
+      } else {
+	// These are to be removed
+	edgesToRemove.push_back(edges[i]);
+	/*
+	  std::cout << arc.getCov() << std::endl;
+	  std::cout << " " << dBG.getSSNode(srcID).getAvgCov() << std::endl;
+	  std::cout << " " << dBG.getSSNode(dstID).getAvgCov() << std::endl;
+	*/
+      }
+    }
+  }
+  dBG.removeEdges(edgesToRemove);
+  //dBG.concatenateNodes();
+
+  cout << "\tGraph has " << dBG.getNumValidNodes()
+       << " nodes and " <<  dBG.getNumValidArcs() << " arcs\n";
+  /*
+  std::vector<EdgeRep> edges2 = dBG.getEdgeReps(dBG.getNumValidArcs());
+  for (size_t i = 0; i < edges2.size(); i++) {
+    NodeID srcID = edges2[i].getSrcID();
+    NodeID dstID = edges2[i].getDstID();
+    Arc arc = dBG.getArc(edges2[i]);
+    if (arc.isValid()) {
+      std::cout << arc.getCov() << " " << th.get((int)dBG.getSSNode(srcID).getAvgCov()) <<  std::endl;
+      std::cout << " " << dBG.getSSNode(srcID).getAvgCov() << std::endl;
+      std::cout << " " << dBG.getSSNode(dstID).getAvgCov() << std::endl;
+    }
+  }
+  */
 
   // Generate unitigs
+  dBG.defrag();
+  dBG.setAllFlags1(false);
+  vector<SSNode> nodes;
+  nodes.resize(dBG.getNumNodes());
+  for(int i = 1; i <= dBG.getNumNodes(); i++) {
+    nodes[i-1] = dBG.getSSNode(i);
+  }
+  sort(nodes.begin(), nodes.end(), compareNodes);
+
+  int id = 1;
+  ofstream ofs("output.fa");
+  for(int i = 0; i < dBG.getNumNodes(); i++) {
+    SSNode start = nodes[i];
+    //std::cout << start.getAvgCov() << std::endl;
+    if (!start.getFlag1()) {
+      start.setFlag1(true);
+      vector<NodeID> nodeSeq;
+      string contig;
+      nodeSeq.clear();
+      nodeSeq.push_back(start.getNodeID());
+      
+      // Extend right
+      SSNode current = start;
+      bool found = true;
+      while(found) {
+	found = false;
+	for(ArcIt ait = current.rightBegin(); ait != current.rightEnd(); ++ait) {
+	  if (ait->getCov() >= th.get((int)dBG.getSSNode(current.getNodeID()).getAvgCov())) {
+	    current = dBG.getSSNode(ait->getNodeID());
+	    current.setFlag1(true);
+	    nodeSeq.push_back(ait->getNodeID());
+	    found = true;
+	    break;
+	  }
+	}
+      }
+      
+      // Extend left
+      std::reverse(nodeSeq.begin(), nodeSeq.end());
+      for(int i = 0; i < nodeSeq.size(); i++) {
+	nodeSeq[i] = -nodeSeq[i];
+      }
+      current = dBG.getSSNode(nodeSeq[nodeSeq.size()-1]);
+      found = true;
+      while(found) {
+	found = false;
+	for(ArcIt ait = current.rightBegin(); ait != current.rightEnd(); ++ait) {
+	  if (ait->getCov() >= th.get((int)dBG.getSSNode(current.getNodeID()).getAvgCov())) {
+	    current = dBG.getSSNode(ait->getNodeID());
+	    current.setFlag1(true);
+	    nodeSeq.push_back(ait->getNodeID());
+	    found = true;
+	    break;
+	  }
+	}
+      }
+
+      /*
+      for(auto it = nodeSeq.begin(); it != nodeSeq.end(); ++it) {
+	std::cout << " " << *it << " (" << dBG.getSSNode(*it).getAvgCov() << ")";
+      }
+      std::cout << endl;
+      */
+      
+      // Write out the contig
+      dBG.convertNodesToString(nodeSeq, contig);
+      ofs << ">contig_" << id << "\n";
+      Util::writeSeqWrap(ofs, contig, 60);
+      id++;
+    }
+  }
+  ofs.close();
+
+  dBG.writeContigs("output2.fa");
+
 }
 
 void stageThreeCorrectGraph(Settings& settings)
