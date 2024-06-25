@@ -262,23 +262,63 @@ void DBGraph::concatenateAroundNode(NodeID seedID, vector<NodeID>& nodeListv)
         NodeID backID = nodeListq.back();
         SSNode back = getSSNode(backID);
 
-        front.deleteAllRightArcs();
-        front.inheritRightArcs(back);
-
         string str;
         convertNodesToString(nodeListv, str);
-
+#ifndef AVG_COV
+        vector<Count> newCounts;
+	vector<Count> newArcCounts;
+	newCounts.resize(str.size()- Kmer::getK() + 1);
+	newArcCounts.resize(str.size()- Kmer::getK());
+	int countI = 0, arcI = 0;
+	
+	for(int j = 0; j < front.getMarginalLength(); j++) {
+	  newCounts[countI++] = front.getCount(j);
+	}
+	for(int j = 0; j < front.getMarginalLength()-1; j++) {
+	  newArcCounts[arcI++] = front.getArcCount(j);
+	}
+#endif
+	
         Coverage newCov = front.getCov();
         for (size_t i = 1; i < nodeListq.size(); i++) {
                 SSNode n = getSSNode(nodeListq[i]);
                 newCov += n.getCov();
 
-                // indicate that the removed node is now part of frontID
+#ifndef AVG_COV
+		for(int j = 0; j < n.getMarginalLength(); j++) {
+		  newCounts[countI++] = n.getCount(j);
+		}
+		newArcCounts[arcI++] = getSSNode(nodeListq[i-1]).rightBegin()->getCov();
+		for(int j = 0; j < n.getMarginalLength()-1; j++) {
+		  newArcCounts[arcI++] = n.getArcCount(j);
+		}
+#endif
+	}
+	front.deleteAllRightArcs();
+	front.inheritRightArcs(back);
+
+	for(size_t i = 1; i < nodeListq.size(); i++) {
+		// indicate that the removed node is now part of frontID
                 removeNode(nodeListq[i], frontID);
         }
 
         front.setCov(newCov);
         front.setSequence(str);
+	front.initializeCounts();
+	
+	if (front.getMarginalLength() != countI) {
+	  std::cout << "N: " << front.getMarginalLength() << " " << countI << std::endl;
+	}
+	if (front.getMarginalLength()-1 != arcI) {
+	  std::cout << "A: " << front.getMarginalLength() << " " << arcI-1 << std::endl;
+	}
+
+	for(int j = 0; j < countI; j++) {
+	  front.setCount(j, newCounts[j]);
+	}
+	for(int j = 0; j < arcI; j++) {
+	  front.setArcCount(j, newArcCounts[j]);
+	}
 
         // it is important to flag the nodes that now also contain
         // also nodes. The rountine updateNodeChain() depends on it.

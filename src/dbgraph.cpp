@@ -237,6 +237,13 @@ void DBGraph::loadBCalm (const string& filename)
         else
                 cout << "Kmer size is " << Kmer::getK() << endl;
 
+#ifndef AVG_COV
+        for (NodeID id = 1; id <= numNodes; id++) {
+	  SSNode node = getSSNode(id);
+	  node.initializeCounts();
+	}
+#endif
+	
         numValidNodes = numNodes;
         numValidArcs = numArcs;
 }

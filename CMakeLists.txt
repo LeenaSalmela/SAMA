@@ -52,4 +52,6 @@ else (SPARSEHASH_FOUND)
             "-DSPARSEHASH_INCLUDE_DIR=<path-to-sparsehash>/include .")
 endif(SPARSEHASH_FOUND)
 
+set(CMAKE_CXX_FLAGS "-Wall -g")
+
 add_subdirectory(src)

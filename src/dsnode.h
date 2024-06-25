@@ -53,7 +53,10 @@ private:
         std::atomic<Coverage> cov;
         std::atomic<bool> myFlag1;
         std::atomic<bool> myFlag2;
-
+#ifndef AVG_COV
+        std::atomic<Count> *counts;
+        std::atomic<Count> *arcCounts;
+#endif
 public:
         /**
          * Set the static arc pointer
@@ -67,9 +70,24 @@ public:
          * Default constructor
          */
         DSNode() : leftID(0), rightID(0), cov(0), myFlag1(false), myFlag2(false)
+#ifndef AVG_COV
+		 , counts(NULL), arcCounts(NULL)
+#endif
         {
                 arcInfo.up = 0;
         }
+  
+        /**
+         * Destructor
+         */
+        ~DSNode() {
+	  if (counts != NULL) {
+	    delete [] counts;
+	  }
+	  if (arcCounts != NULL) {
+	    delete [] arcCounts;
+	  }
+	}
 
         DSNode& operator=(DSNode&& rhs) {
 
@@ -84,17 +102,118 @@ public:
                 cov = rhs.cov.load();
                 myFlag1 = rhs.myFlag1.load();
                 myFlag2 = rhs.myFlag2.load();
-
+#ifndef AVG_COV
+		initializeCounts();
+		for(int i = 0; i < getMarginalLength(); i++) {
+		  counts[i] = rhs.counts[i].load();
+		}
+		for(int i = 0; i < getMarginalLength()-1; i++) {
+		  arcCounts[i] = rhs.arcCounts[i].load();
+		}
+#endif		
                 // load rhs in an empty state
                 rhs.leftID = rhs.rightID = 0;
                 rhs.arcInfo.up = 0;
                 rhs.cov = 0;
                 rhs.myFlag1 = false;
                 rhs.myFlag2 = false;
-
+#ifndef AVG_COV
+		delete [] rhs.counts;
+		rhs.counts = NULL;
+		delete [] rhs.arcCounts;
+		rhs.arcCounts = NULL;
+#endif
                 return *this;
         }
 
+#ifndef AVG_COV
+        std::atomic<Count> *getCounts() {
+	  return counts;
+	}
+
+        void clearCounts() {
+	  if (counts != NULL) {
+	    for(int i = 0; i < getMarginalLength(); i++) {
+	      counts[i] = 0;
+	    }
+	  }
+	}
+
+        std::atomic<Count> *getArcCounts() {
+	  return arcCounts;
+	}
+
+        void clearArcCounts() {
+	  if (arcCounts != NULL) {
+	    for(int i = 0; i < getMarginalLength()-1; i++) {
+	      arcCounts[i] = 0;
+	    }
+	  }
+	}
+
+        /**
+         * Set the count
+	 * @param pos The position
+         * @param target The count
+         */
+        void setCount(int pos, Count target) {
+	  assert(pos < getMarginalLength() && pos >= 0);
+	  counts[pos] = target;
+        }
+
+        /**
+         * Get the count
+	 * "param pos The position
+         * @return The count
+         */
+        Count getCount(int pos) const {
+	  assert(pos < getMarginalLength() && pos >= 0);
+	  return counts[pos];
+        }
+
+        /**
+         * Atomically increment the count
+	 * @param pos The position
+         * @param rhs Right hand side (default = 1.0f)
+         */
+        void incCount(int pos, Count rhs = 1) {
+	  assert(pos < getMarginalLength() && pos >= 0);
+	  auto current = counts[pos].load();
+	  while (!counts[pos].compare_exchange_weak(current, current + rhs));
+        }
+
+        /**
+         * Set the arc count
+	 * @param pos The position
+         * @param target The arc count
+         */
+        void setArcCount(int pos, Count target) {
+	  assert(pos < getMarginalLength()-1 && pos >= 0);
+	  arcCounts[pos] = target;
+        }
+
+        /**
+         * Get the arc count
+	 * "param pos The position
+         * @return The arc count
+         */
+        Count getArcCount(int pos) const {
+	  assert(pos < getMarginalLength()-1 && pos >= 0);
+	  return arcCounts[pos];
+        }
+
+        /**
+         * Atomically increment the arc count
+	 * @param pos The position
+         * @param rhs Right hand side (default = 1.0f)
+         */
+        void incArcCount(int pos, Count rhs = 1) {
+	  assert(pos < getMarginalLength()-1 && pos >= 0);
+	  auto current = arcCounts[pos].load();
+	  while (!arcCounts[pos].compare_exchange_weak(current, current + rhs));
+        }
+
+#endif
         /**
          * Set the coverage
          * @param target The coverage
@@ -200,6 +319,16 @@ public:
         void invalidate() {
                 arcInfo.p.invalid = 1;
                 sequence.clear();
+#ifndef AVG_COV
+		if (counts != NULL) {
+		  delete [] counts;
+		  counts = NULL;
+		}
+		if (arcCounts != NULL) {
+		  delete [] arcCounts;
+		  arcCounts = NULL;
+		}
+#endif
         }
 
         /**
@@ -222,7 +351,7 @@ public:
          * The marginal length == length - k + 1
          * @return The marginal length of the node
          */
-        NodeLength getMarginalLength() const {
+        size_t getMarginalLength() const {
                 return getLength() - Kmer::getK() + 1;
         }
 
@@ -358,6 +487,28 @@ public:
                 sequence.setSequence(str);
         }
 
+
+#ifndef AVG_COV
+        void initializeCounts() {
+	  if (counts != NULL) {
+	    delete [] counts;
+	  }
+	  counts = new std::atomic<Count>[getMarginalLength()];
+	  for(int i = 0; i < getMarginalLength(); i++) {
+	    counts[i] = 0;
+	  }
+	  
+	  if (arcCounts != NULL) {
+	    delete [] arcCounts;
+	  }
+	  arcCounts = new std::atomic<Count>[getMarginalLength()-1];
+	  for(int i = 0; i < getMarginalLength()-1; i++) {
+	    arcCounts[i] = 0;
+	  }
+	}
+#endif
+
+  
         /**
          * Get the sequence of this node
          * @return The sequence of this node
@@ -454,6 +605,14 @@ public:
                 ofs.write((char*)&rightID, sizeof(rightID));
                 ofs.write((char*)&arcInfo, sizeof(arcInfo));
                 sequence.write(ofs);
+#ifndef AVG_COV
+		for(int i = 0; i < getMarginalLength(); i++) {
+		  ofs.write((char*)&counts[i],sizeof(counts[i]));
+		}
+		for(int i = 0; i < getMarginalLength()-1; i++) {
+		  ofs.write((char*)&arcCounts[i],sizeof(arcCounts[i]));
+		}
+#endif
         }
 
         /**
@@ -466,6 +625,23 @@ public:
                 ifs.read((char*)&rightID, sizeof(rightID));
                 ifs.read((char*)&arcInfo, sizeof(arcInfo));
                 sequence.read(ifs);
+#ifndef AVG_COV
+		if (counts != NULL)
+		  delete [] counts;
+		counts = new std::atomic<Count>[getMarginalLength()];
+		//std::cout << "ML: " << getMarginalLength() << std::endl;
+		for(int i = 0; i < getMarginalLength(); i++) {
+		  ifs.read((char*)&counts[i], sizeof(counts[i]));
+		  //std::cout << "N: " <<  counts[i] << std::endl;
+		}
+		if (arcCounts != NULL)
+		  delete [] arcCounts;
+		arcCounts = new std::atomic<Count>[getMarginalLength()-1];
+		for(int i = 0; i < getMarginalLength()-1; i++) {
+		  ifs.read((char*)&arcCounts[i], sizeof(arcCounts[i]));
+		  //std::cout << "A: " <<  counts[i] << std::endl;
+		}
+#endif
         }
 };
 

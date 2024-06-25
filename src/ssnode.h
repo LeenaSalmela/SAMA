@@ -184,6 +184,101 @@ public:
                 return dsNode->getFlag2();
         }
 
+#ifndef AVG_COV
+        /**
+         * Set the count
+	 * @param pos The position
+         * @param target The coverage
+         */
+        void setCount(int pos, Count target) {
+	  if (nodeID > 0) {
+	    dsNode->setCount(pos, target);
+	  } else {
+	    dsNode->setCount(getMarginalLength()-pos-1, target);
+	  }
+        }
+
+        void clearCounts() {
+	  dsNode->clearCounts();
+	}
+
+  
+        /**
+         * Get the count
+	 * @param pos The position
+         * @return The coverage
+         */
+        Coverage getCount(int pos) const {
+	  if (nodeID > 0) {
+	    return dsNode->getCount(pos);
+	  } else {
+	    return dsNode->getCount(getMarginalLength()-pos-1);
+	  }
+        }
+
+        /**
+         * Atomically increment the count
+	 * @param pos The position
+         * @param rhs Right hand side (default = 1.0f)
+         */
+        void incCount(int pos, Coverage rhs = 1.0f) {
+	  if (nodeID > 0) {
+	    dsNode->incCount(pos, rhs);
+	  } else {
+	    dsNode->incCount(getMarginalLength()-pos-1, rhs);
+	  }
+        }
+
+        /**
+         * Set the arc count
+	 * @param pos The position
+         * @param target The coverage
+         */
+        void setArcCount(int pos, Count target) {
+	  if (nodeID > 0) {
+	    dsNode->setArcCount(pos, target);
+	  } else {
+	    dsNode->setArcCount(getMarginalLength()-pos-2, target);
+	  }
+        }
+
+        void clearArcCounts() {
+	  dsNode->clearArcCounts();
+	}
+
+  
+        /**
+         * Get the arc count
+	 * @param pos The position
+         * @return The coverage
+         */
+        Coverage getArcCount(int pos) const {
+	  if (nodeID > 0) {
+	    return dsNode->getArcCount(pos);
+	  } else {
+	    return dsNode->getArcCount(getMarginalLength()-pos-2);
+	  }
+        }
+
+        /**
+         * Atomically increment the arc count
+	 * @param pos The position
+         * @param rhs Right hand side (default = 1.0f)
+         */
+        void incArcCount(int pos, Coverage rhs = 1.0f) {
+	  if (nodeID > 0) {
+	    dsNode->incArcCount(pos, rhs);
+	  } else {
+	    dsNode->incArcCount(getMarginalLength()-pos-2, rhs);
+	  }
+        }
+
+        void initializeCounts() {
+	  dsNode->initializeCounts();
+	}
+  
+#endif
+
         /**
          * Set the coverage
          * @param target The coverage

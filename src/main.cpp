@@ -523,7 +523,9 @@ void stageAssemble(Settings& settings)
     NodeID dstID = edges[i].getDstID();
     Arc arc = dBG.getArc(edges[i]);
     if (arc.isValid()) {
-      if (arc.getCov() >= th.get((int)dBG.getSSNode(srcID).getAvgCov())) {
+      SSNode n = dBG.getSSNode(srcID);
+#ifndef AVG_COV
+      if (arc.getCov() >= th.get((int)n.getCount(n.getMarginalLength()-1))) {
       } else {
 	// These are to be removed
 	edgesToRemove.push_back(edges[i]);
@@ -533,10 +535,22 @@ void stageAssemble(Settings& settings)
 	  std::cout << " " << dBG.getSSNode(dstID).getAvgCov() << std::endl;
 	*/
       }
+#else
+      if (arc.getCov() >= th.get((int)n.getAvgCov())) {
+      } else {
+	// These are to be removed
+	edgesToRemove.push_back(edges[i]);
+	/*
+	  std::cout << arc.getCov() << std::endl;
+	  std::cout << " " << dBG.getSSNode(srcID).getAvgCov() << std::endl;
+	  std::cout << " " << dBG.getSSNode(dstID).getAvgCov() << std::endl;
+	*/
+      }
+#endif
     }
   }
   dBG.removeEdges(edgesToRemove);
-  //dBG.concatenateNodes();
+  dBG.concatenateNodes();
 
   cout << "\tGraph has " << dBG.getNumValidNodes()
        << " nodes and " <<  dBG.getNumValidArcs() << " arcs\n";
@@ -566,8 +580,11 @@ void stageAssemble(Settings& settings)
 
   int id = 1;
   ofstream ofs("output.fa");
+  int breaks = 0;
   for(int i = 0; i < dBG.getNumNodes(); i++) {
     SSNode start = nodes[i];
+    if (!start.isValid())
+      continue;
     //std::cout << start.getAvgCov() << std::endl;
     if (!start.getFlag1() && start.getAvgCov() >= th.get((int)start.getAvgCov())) {
       start.setFlag1(true);
@@ -578,20 +595,15 @@ void stageAssemble(Settings& settings)
       
       // Extend right
       SSNode current = start;
-      bool found = true;
-      while(found) {
-	found = false;
-	for(ArcIt ait = current.rightBegin(); ait != current.rightEnd(); ++ait) {
-	  if (ait->getCov() >= th.get((int)dBG.getSSNode(current.getNodeID()).getAvgCov())) {
-	    current = dBG.getSSNode(ait->getNodeID());
-	    current.setFlag1(true);
-	    if (current.getAvgCov() >= th.get((int)current.getAvgCov())) {
-	      nodeSeq.push_back(ait->getNodeID());
-	      found = true;
-	      break;
-	    }
-	  }
-	}
+      while(current.numRightArcs() == 1) {
+	NodeID rightID = current.rightBegin()->getNodeID();
+	SSNode right = dBG.getSSNode(rightID);
+	// don't merge palindromic repeats / loops
+	if (right.getFlag1())
+	  break;
+	nodeSeq.push_back(rightID);
+	right.setFlag1(true);
+	current = right;
       }
       
       // Extend left
@@ -600,20 +612,15 @@ void stageAssemble(Settings& settings)
 	nodeSeq[i] = -nodeSeq[i];
       }
       current = dBG.getSSNode(nodeSeq[nodeSeq.size()-1]);
-      found = true;
-      while(found) {
-	found = false;
-	for(ArcIt ait = current.rightBegin(); ait != current.rightEnd(); ++ait) {
-	  if (ait->getCov() >= th.get((int)dBG.getSSNode(current.getNodeID()).getAvgCov())) {
-	    current = dBG.getSSNode(ait->getNodeID());
-	    current.setFlag1(true);
-	    if (current.getAvgCov() >= th.get((int)current.getAvgCov())) {
-	      nodeSeq.push_back(ait->getNodeID());
-	      found = true;
-	      break;
-	    }
-	  }
-	}
+      while(current.numRightArcs() == 1) {
+	NodeID rightID = current.rightBegin()->getNodeID();
+	SSNode right = dBG.getSSNode(rightID);
+	// don't merge palindromic repeats / loops
+	if (right.getFlag1())
+	  break;
+	nodeSeq.push_back(rightID);
+	right.setFlag1(true);
+	current = right;
       }
  
       /*
@@ -622,14 +629,51 @@ void stageAssemble(Settings& settings)
       }
       std::cout << endl;
       */
+
+#ifndef AVG_COV
+      // Write out the contig(s)
+      contig.clear();
+      for(size_t i = 0; i < nodeSeq.size(); i++) {
+	size_t start = 0;
+	SSNode n = dBG.getSSNode(nodeSeq[i]);
+	if (i == 0) {
+	  contig.append(n.getSequence().substr(start, Kmer::getK()-1));
+	}
+	for(size_t end = 0; end < n.getMarginalLength()-1; end++) {
+	  if (n.getArcCount(end) < th.get(n.getCount(end))) {
+	    breaks++;
+	    contig.append(n.getSequence().substr(start+Kmer::getK()-1, end-start+1));
+	    if (contig.length() > Kmer::getK()) {
+	      ofs << ">contig_" << id << "\n";
+	      Util::writeSeqWrap(ofs, contig, 60);
+	      id++;
+	    }
+	    start = end+1;
+	    contig.clear();
+	    contig.append(n.getSequence().substr(start, Kmer::getK()-1));
+	  }
+	}
+	if (start < n.getMarginalLength()-1) {
+	  contig.append(n.getSequence().substr(start));
+	}
+      }
+      if (contig.length() >= Kmer::getK()) {
+	ofs << ">contig_" << id << "\n";
+	Util::writeSeqWrap(ofs, contig, 60);
+	id++;
+      }
+	
       
+#else
       // Write out the contig
       dBG.convertNodesToString(nodeSeq, contig);
       ofs << ">contig_" << id << "\n";
-      Util::writeSeqWrap(ofs, contig, 60);
+      Util::writeSeqWrap(ofs, contig, 60);      
       id++;
+#endif
     }
   }
+  std::cout << "Number of breaks due to coverage: " << breaks << std::endl;
   ofs.close();
 
   dBG.writeContigs("output2.fa");

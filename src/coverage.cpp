@@ -303,6 +303,9 @@ void DBGraph::covCount(const FastQRecord& rr, const KmerNPPTable& table)
                 double score = Util::phred2prob(qual, it.getOffset(),
                                                 it.getOffset() + Kmer::getK());
                 n.incCov(score);
+#ifndef AVG_COV
+		n.incCount(npp.getPosition(), 1);
+#endif
 
                 // if current kmer succeeds a valid previous kmer
                 if ((prevOff+1 == it.getOffset()) && (crossesArc(prevNpp, npp))) {
@@ -312,6 +315,10 @@ void DBGraph::covCount(const FastQRecord& rr, const KmerNPPTable& table)
                         // palindromic arcs exist only once! Don't add coverage!
                         if (prevNpp.getNodeID() != - id)
                                 n.leftArc(prevNpp.getNodeID())->incCov(score);
+#ifndef AVG_COV
+		} else if (it.getOffset() != 0) {
+		  n.incArcCount(npp.getPosition()-1, 1);
+#endif
                 }
 
                 prevNpp = npp;
@@ -334,11 +341,17 @@ void DBGraph::covCountThread(FastQReader& inputs,
 void DBGraph::getCovFromReads(LibraryContainer &inputs, const KmerNPPTable& table)
 {
         // reset all coverages (might have been loaded from BCALM)
-        for (size_t i = 1; i <= numNodes; i++)
+        for (size_t i = 1; i <= numNodes; i++) {
                 getSSNode(i).setCov(0);
-
-        for (size_t i = 1; i <= numArcs; i++)
+#ifndef AVG_COV
+		getSSNode(i).clearCounts();
+		getSSNode(i).clearArcCounts();
+#endif
+	}
+	
+        for (size_t i = 1; i <= numArcs; i++) {
                 arcs[i].setCov(0);
+	}
 
         // initialize Phred score lookup table
         if (settings.useQual()) {

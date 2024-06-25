@@ -40,6 +40,9 @@ typedef uint64_t NucleotideID;
 typedef uint32_t NodeLength;            // max length is 4 billion
 typedef NodeLength NodePosition;        // position in a contig or read
 typedef float Coverage;
+#ifndef AVG_COV
+typedef int16_t Count;
+#endif
 
 template<size_t numBytes>
 class TKmer;
