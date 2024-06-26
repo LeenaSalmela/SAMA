@@ -478,21 +478,42 @@ void stageTwo(Settings& settings)
         cout << "Stage 2 finished in " << Util::stopChronoStr() << endl;
 }
 
+
+void stageThreshold(Settings& settings)
+{
+  cout << "\nEntering stage thresholding\n";
+  cout << "===========================\n" << endl;
+  
+  if (Util::fileExists(settings.getThresholdFilename())) {
+    cout << "File " << settings.getThresholdFilename()
+	 << " exists. Skipping threshold computation.\n";
+    return;
+  }
+
+  Util::startChrono();
+  Thresholds th;
+
+  th.computeThresholds("histogram.node.st2.dat", settings.getMisassLh());
+
+  th.writeThresholds(settings.getThresholdFilename());
+  
+  cout << "Stage thresholding finished in " << Util::stopChronoStr() << endl;	
+}
+
 bool compareNodes(SSNode n1, SSNode n2) {
   return (n1.getAvgCov() < n2.getAvgCov());
 }
 
 void stageAssemble(Settings& settings)
 {
+  cout << "\nEntering stage assemble\n";
+  cout << "=======================\n" << endl;
+
   if (!Util::fileExists(settings.getThresholdFilename())) {
     cout << "File " << settings.getThresholdFilename()
 	 << " does not exist. Compute the thresholds file and rerun.\n";
     return;
   }
-
-  cout << "\nEntering stage assemble\n";
-  cout << "=======================\n" << endl;
-
 
   // Read the thresholds
   Thresholds th;
@@ -507,6 +528,8 @@ void stageAssemble(Settings& settings)
   cout << "\n\tLoaded " << dBG.getNumNodes() << " nodes and "
        << dBG.getNumArcs() << " arcs (" << Util::stopChronoStr() << ")\n";
 
+  Util::startChrono();
+  
   double nodeCutoff= 4.9;
   vector<NodeRep> nodeReps = dBG.getLowCovNodes(nodeCutoff);
   cout << "Selected " << nodeReps.size()
@@ -676,7 +699,9 @@ void stageAssemble(Settings& settings)
   std::cout << "Number of breaks due to coverage: " << breaks << std::endl;
   ofs.close();
 
-  dBG.writeContigs("output2.fa");
+  cout << "Stage assemble finished in " << Util::stopChronoStr() << endl;
+
+  //  dBG.writeContigs("output2.fa");
 
 }
 
@@ -1084,6 +1109,8 @@ int main(int argc, char** argv)
                 }
 		*/
 
+		stageThreshold(settings);
+		
 		stageAssemble(settings);
 		
         } catch (exception& e) {

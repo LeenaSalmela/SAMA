@@ -79,14 +79,16 @@ void Settings::printUsage() const
         "  -vis-subgraph\t\tCentral nodeID around which a subgraph will be visualised [default = 0]\n"
         "               \t\t if value = 0, no visualisation and normal pipeline will be run\n\n"
 
-        "Report bugs to Jan Fostier <jan.fostier@ugent.be>" << endl;
+	"  -misassembly-likelihood\tLikelihood of a misassembly [default=1.0e-6]"
+
+        "Report bugs to Leena Salmela <leena.salmela@helsinki.fi>" << endl;
 }
 
 Settings::Settings(int argc, char ** argv) : useQualFlag(false), approxInfFlag(false),
         mapAssignment(false), singleCRF(false), numThreads(thread::hardware_concurrency()),
         abundanceMin(-1), crfDepth(5), crfMargin(2), crfFlow(1e7), crfMaxFact(1e6),
         mmCov(-1.0), mmErrCov(1.0), mmODF(1.5), mmComponents(6), emMaxIter(25),
-        emConvEps(1e-3), emTrainSize(1e4), phredBase(33), visGraphNode(0)
+	emConvEps(1e-3), emTrainSize(1e4), phredBase(33), visGraphNode(0), misassLh(1e-10)
 {
         const int reqArguments = 2;     // not counting argument 0
 
@@ -173,6 +175,8 @@ Settings::Settings(int argc, char ** argv) : useQualFlag(false), approxInfFlag(f
                         phredBase = atoi(argv[i+1]);
                 } else if (arg == "-vis-subgraph") {
                         visGraphNode = atoi(argv[i+1]);
+                } else if (arg == "-misassembly-likelihood") {
+                        misassLh = atof(argv[i+1]);
                 } else {
                         cerr << "Unknown argument: " << argv[i] << endl;
                         printUsage();
@@ -255,4 +259,8 @@ Settings::Settings(int argc, char ** argv) : useQualFlag(false), approxInfFlag(f
                      << "Detox cannot automatically infer the correct value.\n"
                      << "Please consider providing the appropriate -abudance-min argument to Detox.\n";
         }
+
+	if (misassLh <= 0 || misassLh >= 1.0) {
+	  throw runtime_error("Misassembly likelihood must be larger than 0.0 and smaller than 1.0");
+	}
 }

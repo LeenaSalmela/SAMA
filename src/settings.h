@@ -63,6 +63,8 @@ private:
         int phredBase;          // ASCII value corresponding to Phred score Q=0
         int visGraphNode;       // Node around which neighbourhood to visualise is centered
 
+        double misassLh;        // Likelihood of misassembly
+  
         /**
          * Print usage to stdout
          */
@@ -377,6 +379,14 @@ public:
          */
         int getVisGraphNode() const {
                 return visGraphNode;
+        }
+
+        /**
+         * Get misassembly likelihood
+         * @return misassembly likelihood
+         */
+        double getMisassLh() const {
+                return misassLh;
         }
 
         /**
