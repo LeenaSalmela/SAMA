@@ -34,7 +34,10 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 
   std::vector<double *> repeatP;
   int max_cov = 10;
-
+  int est_cov = -1.0;
+  int min_cov = 5;
+  double est_cov_maxP = -1.0;
+  
   std::cout << epsilon << std::endl;
   
   repeatP.resize(max_a+1);
@@ -49,6 +52,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
       double *row = new double[5];
       int cov = std::stoi(cell);
       std::getline(file, cell, '\t');  // 0 copies
+      double p0 = std::strtod(cell.c_str(), NULL);
       double s = 0.0;
       for(int r = 1; r <= 5; r++) {
 	std::getline(file, cell, '\t');  // r copies
@@ -57,6 +61,12 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 	s+= p;
       }
       std::getline(file, cell, '\n');
+      if (est_cov_maxP < row[0]) {
+	est_cov = cov;
+	est_cov_maxP = row[0];
+      }
+      if (p0 > row[0])
+	min_cov = cov+1;
       for(int r = 1; r <= 5; r++) {
 	row[r-1] = row[r-1]/s;
       }
@@ -74,24 +84,31 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   }
   file.close();
 
-  for(int a = 10; a <= max_cov; a++) {
+  std::cout << "Estimated coverage: " << est_cov << std::endl;
+  
+  for(int a = min_cov; a <= max_cov; a++) {
     if (repeatP[a] == NULL)
       continue;
+    //std::cout << "a: " << a << std::endl;
     for(int ell = a/2+1; ell < a; ell++) {
+      //std::cout << "  ell: " << ell << std::endl;
       double d_ell = (double) ell;
       double d_a = (double) a;
       double totP = 2.0*repeatP[a][1]*exp(-(d_ell-d_a/2.0)*(d_ell-d_a/2.0)*2.0/d_a);
+      //std::cout << "    totP: " << totP << std::endl;
       for(int k = 2; k < 5; k++) {
-	if (ell < k/(k+1)*a) {
+	double d_k = (double)k;
+	if (ell < d_k/(d_k+1)*a) {
 	  totP += repeatP[a][k];
 	} else {
-	  double d_k = (double)k;
 	  totP += (d_k+1.0)*repeatP[a][k]*exp(-(d_k+1.0)/(2.0*d_a)*(d_ell-d_a*d_k/(d_k+1.0))*(d_ell-d_a*d_k/(d_k+1.0)));
 	}
+	//std::cout << "    totP: " << totP << std::endl;
       }
       if (totP < epsilon) {
 	th[a] = ell;
 	prob[a] = totP;
+	//std::cout << "    Threshold!" << std::endl;
 	break;
       }
     }

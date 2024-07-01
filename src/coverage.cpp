@@ -316,7 +316,7 @@ void DBGraph::covCount(const FastQRecord& rr, const KmerNPPTable& table)
                         if (prevNpp.getNodeID() != - id)
                                 n.leftArc(prevNpp.getNodeID())->incCov(score);
 #ifndef AVG_COV
-		} else if (it.getOffset() != 0) {
+		} else if (prevOff+1 == it.getOffset() && prevNpp.getNodeID() == id && it.getOffset() != 0) {
 		  n.incArcCount(npp.getPosition()-1, 1);
 #endif
                 }
