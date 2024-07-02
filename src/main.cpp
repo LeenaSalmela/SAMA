@@ -628,7 +628,7 @@ void stageAssemble(Settings& settings)
 	right.setFlag1(true);
 	current = right;
       }
-      
+
       // Extend left
       std::reverse(nodeSeq.begin(), nodeSeq.end());
       for(int i = 0; i < nodeSeq.size(); i++) {
@@ -645,7 +645,7 @@ void stageAssemble(Settings& settings)
 	right.setFlag1(true);
 	current = right;
       }
- 
+
       /*
       for(auto it = nodeSeq.begin(); it != nodeSeq.end(); ++it) {
 	std::cout << " " << *it << " (" << dBG.getSSNode(*it).getAvgCov() << ")";
@@ -660,7 +660,7 @@ void stageAssemble(Settings& settings)
 	size_t start = 0;
 	SSNode n = dBG.getSSNode(nodeSeq[i]);
 	if (i == 0) {
-	  contig.append(n.getSequence().substr(start, Kmer::getK()-1));
+	  contig = n.getSequence().substr(start, Kmer::getK()-1);
 	}
 	for(size_t end = 0; end < n.getMarginalLength()-1; end++) {
 	  if (n.getArcCount(end) < th.get(n.getCount(end))) {
@@ -673,14 +673,14 @@ void stageAssemble(Settings& settings)
 	    }
 	    start = end+1;
 	    contig.clear();
-	    contig.append(n.getSequence().substr(start, Kmer::getK()-1));
+	    contig = n.getSequence().substr(start, Kmer::getK()-1);
 	  }
 	}
 	if (start < n.getMarginalLength()-1) {
-	  contig.append(n.getSequence().substr(start));
+	  contig.append(n.getSequence().substr(start+Kmer::getK()-1));
 	}
       }
-      if (contig.length() >= Kmer::getK()) {
+      if (contig.length() > Kmer::getK()) {
 	ofs << ">contig_" << id << "\n";
 	Util::writeSeqWrap(ofs, contig, 60);
 	id++;
