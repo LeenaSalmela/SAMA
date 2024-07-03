@@ -35,7 +35,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   std::vector<double *> repeatP;
   int max_cov = 10;
   int est_cov = -1.0;
-  int min_cov = 5;
+  int min_cov = -1;
   double est_cov_maxP = -1.0;
   
   std::cout << epsilon << std::endl;
@@ -44,7 +44,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   for(int a = 0; a <= max_a; a++) {
     repeatP[a] = NULL;
   }
-  
+
   while(!file.eof())
   {
     if (std::getline(file, cell, '\t'))
@@ -65,7 +65,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 	est_cov = cov;
 	est_cov_maxP = row[0];
       }
-      if (p0 > row[0])
+      if (p0 > row[0] && min_cov < 0)
 	min_cov = cov+1;
       for(int r = 1; r <= 5; r++) {
 	row[r-1] = row[r-1]/s;
@@ -84,7 +84,12 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   }
   file.close();
 
+  if (min_cov < 0)
+    min_cov = 5;
+  
+  std::cout << "Minimum coverage: " << min_cov << std::endl;
   std::cout << "Estimated coverage: " << est_cov << std::endl;
+  
   
   for(int a = min_cov; a <= max_cov; a++) {
     if (repeatP[a] == NULL)
