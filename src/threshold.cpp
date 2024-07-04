@@ -45,6 +45,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
     repeatP[a] = NULL;
   }
 
+  bool min_cov_set = false;
   while(!file.eof())
   {
     if (std::getline(file, cell, '\t'))
@@ -65,8 +66,10 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 	est_cov = cov;
 	est_cov_maxP = row[0];
       }
-      if (p0 > row[0] && min_cov < 0)
+      if (p0 > row[0] && ! min_cov_set)
 	min_cov = cov+1;
+      else
+	min_cov_set = true;
       for(int r = 1; r <= 5; r++) {
 	row[r-1] = row[r-1]/s;
       }
