@@ -72,8 +72,12 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
       }
       if (cov > max_a) {
 	repeatP.resize(2*max_a+1);
+	th.resize(2*max_a+1);
+	prob.resize(2*max_a+1);
 	for(int a = max_a+1; a <= 2*max_a; a++) {
 	  repeatP[a] = NULL;
+	  th[a] = a+10000;
+	  prob[a] = 0.0;
 	}
 	max_a = 2*max_a;
       }
