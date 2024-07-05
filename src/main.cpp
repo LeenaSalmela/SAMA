@@ -549,6 +549,11 @@ void stageAssemble(Settings& settings)
       SSNode n = dBG.getSSNode(srcID);
 #ifndef AVG_COV
       if (arc.getCov() >= th.get((int)n.getCount(n.getMarginalLength()-1))) {
+	SSNode n2 = dBG.getSSNode(dstID);
+	if (arc.getCov() >= th.get((int)n2.getCount(n2.getMarginalLength()-1))) {
+	} else {
+	  edgesToRemove.push_back(edges[i]);
+	}
       } else {
 	// These are to be removed
 	edgesToRemove.push_back(edges[i]);
