@@ -3,7 +3,7 @@
 Misassembly Avoidance Guaranteed Assembler
 
 ## Prerequisites
-In order to build Detox you need to the following software or library packages:
+In order to build MAGA you need to the following software or library packages:
 
   * CMake version 2.6.3 or higher
   * GCC version 4.7 or higher
@@ -12,7 +12,7 @@ In order to build Detox you need to the following software or library packages:
   * recent [Boost](https://www.boost.org/) libraries (for approximate inference)
   * GMP library (for approximate inference)
 
-For approximate inference computations the Detox included in MAGA relies on an adaptation of the Loopy belief propagation implementation of the [libDAI](https://bitbucket.org/jorism/libdai/src/master/) C++ libary. 
+For approximate inference computations the Detox method included in MAGA relies on an adaptation of the Loopy belief propagation implementation of the [libDAI](https://bitbucket.org/jorism/libdai/src/master/) C++ libary. 
 The classes from libDAI that are necessary for Loopy Belief Propagation with our own additions of more recent message passing schemes are provided in this repository.
 
 In order to run MAGA you also need to install and compile [BCALM 2](https://github.com/GATB/bcalm).
