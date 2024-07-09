@@ -1,4 +1,7 @@
 /******************************************************************************
+ *   Copyright (C) 2024 Leena Salmela (leena.salmela@helsinki.fi)             *
+ *   This file has been modified for MAGA                                     *
+ *                                                                            *
  *   Copyright (C) 2014 - 2022 Jan Fostier (jan.fostier@ugent.be)             *
  *   This file is part of Detox                                               *
  *                                                                            *

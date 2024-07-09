@@ -1,5 +1,0 @@
-Source node	Target node	Coverage	True mult.	Est mult.	LOR	Belief	correct
-6	972	41	2	2	12.4565	0.999996	1
-6	1775	23	1	1	21.5006	1	1
--971	6	22	1	1	22.2188	1	1
-972	6	41	2	2	12.4565	0.999996	1
