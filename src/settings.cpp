@@ -80,9 +80,9 @@ void Settings::printUsage() const
 
         "  -phred-base\t\tASCII value corresponding to Phred score Q = 0 [default = 33]\n\n"
         "  -vis-subgraph\t\tCentral nodeID around which a subgraph will be visualised [default = 0]\n"
-        "               \t\t if value = 0, no visualisation and normal pipeline will be run\n\n"
+        "               \t\t if value = 0, no visualisation and normal pipeline will be run\n"
 
-	"  -misassembly-likelihood\tLikelihood of a misassembly [default=1.0e-6]"
+	"  -misassembly-likelihood\tLikelihood of a misassembly [default=1.0e-6]\n\n"
 
         "Report bugs to Leena Salmela <leena.salmela@helsinki.fi>" << endl;
 }
