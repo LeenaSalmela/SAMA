@@ -125,3 +125,24 @@ The thresholds for extension and their corresponding misassembly probabilities a
  * `-num-threads` to specify the number of threads to use, when using exact inference on subgraphs. By default, the number of threads equals the number of CPU cores or twice that number for CPUs that support hyperthreading.
  * `-help` to display the help page.
  * `-version` to display the version number.
+
+## Small test example
+
+Enter the test directory:
+
+```bash
+cd MAGA/test/
+```
+Here you will find a set of reads in the `reads.fq` file and the corresponding read manifest file `reads.mf`.
+
+Run BCALM 2:
+
+```bash
+bcalm -in reads.mf -kmer-size 31 -abundance-min 2
+```
+Now you will find the `reads.unitigs.fa` file in the test directory which includes the BCALM 2 output. Next you need to run MAGA:
+
+```bash
+maga -abundance-min 2 -misassembly-likelihood 1e-03 reads.unitigs.fa reads.mf
+```
+The contigs produced by MAGA are now in file `output.fa` in the test directory. You can also examine the abundance thresholds computed by MAGA in file `thresholds.list`.
