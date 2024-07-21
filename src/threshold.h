@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2024 Leena Salmela (leena.salmela@helsinki.fi)             *
- *   This file is part of MAGA                                                *
+ *   This file is part of SAMA                                                *
  *                                                                            *
  *   This program is free software; you can redistribute it and/or modify     *
  *   it under the terms of the GNU Affero General Public License as published *

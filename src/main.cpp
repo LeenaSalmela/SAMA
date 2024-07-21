@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2024 Leena Salmela (leena.salmela@helsinki.fi)             *
- *   This file has been modified for MAGA                                     *
+ *   This file has been modified for SAMA                                     *
  *                                                                            *
  *   Copyright (C) 2014 - 2022 Jan Fostier (jan.fostier@ugent.be)             *
  *   This file is part of Detox                                               *
@@ -720,7 +720,7 @@ int main(int argc, char** argv)
                 Settings settings(argc, argv);
                 LibraryContainer libraries(settings.getReadFilename());
 
-                cout << "Welcome to MAGA version " << MAGA_MAJOR_VERSION << "." << MAGA_MINOR_VERSION << "." << MAGA_PATCH_LEVEL;
+                cout << "Welcome to SAMA version " << SAMA_MAJOR_VERSION << "." << SAMA_MINOR_VERSION << "." << SAMA_PATCH_LEVEL;
 
 #ifdef DEBUG
                 cout << " (debug mode)" << endl;

@@ -1,9 +1,9 @@
-# MAGA
+# SAMA
 
-Misassembly Avoidance Guaranteed Assembler
+Sequence Assembly avoiding MisAssemblies
 
 ## Prerequisites
-In order to build MAGA you need to the following software or library packages:
+In order to build SAMA you need to the following software or library packages:
 
   * CMake version 2.6.3 or higher
   * GCC version 4.7 or higher
@@ -12,38 +12,38 @@ In order to build MAGA you need to the following software or library packages:
   * recent [Boost](https://www.boost.org/) libraries (for approximate inference)
   * GMP library (for approximate inference)
 
-For approximate inference computations the Detox method included in MAGA relies on an adaptation of the Loopy belief propagation implementation of the [libDAI](https://bitbucket.org/jorism/libdai/src/master/) C++ libary. 
+For approximate inference computations the Detox method included in SAMA relies on an adaptation of the Loopy belief propagation implementation of the [libDAI](https://bitbucket.org/jorism/libdai/src/master/) C++ libary. 
 The classes from libDAI that are necessary for Loopy Belief Propagation with our own additions of more recent message passing schemes are provided in this repository.
 
-In order to run MAGA you also need to install and compile [BCALM 2](https://github.com/GATB/bcalm).
+In order to run SAMA you also need to install and compile [BCALM 2](https://github.com/GATB/bcalm).
 
 ## Compilation
 
-Clone the MAGA Github repository:
+Clone the SAMA Github repository:
 
 ```bash
-git clone https://github.com/LeenaSalmela/MAGA
+git clone https://github.com/LeenaSalmela/SAMA
 ```
 
 Next, compile the C++ code as follows:
 
 ```bash
-cd MAGA
+cd SAMA
 mkdir build
 cd build
 cmake ..
 make
 ```
 
-After compilation, the `maga` binary can be found in:
+After compilation, the `sama` binary can be found in:
 
 ```bash
-MAGA/build/src/maga
+SAMA/build/src/sama
 ```
 
 ## Usage
 
-We use BCALM 2 to build a compacted de Bruijn graph from sequencing data. After that MAGA is used to produce contigs with a guaranteed correctness.
+We use BCALM 2 to build a compacted de Bruijn graph from sequencing data. After that SAMA is used to produce contigs with a guaranteed correctness.
 
 ### 1. Generating the de Bruijn graph using BCALM 2
 The first step is to prepare a manifest file, e.g. named `reads.mf`, in which the input FASTQ files are listed. For example, suppose the reads are stored in two FASTQ files named `reads_1.fastq` and `reads_2.fastq`, then the `reads.mf` file would simply list these input files, one file per line:
@@ -62,26 +62,26 @@ bcalm -in reads.mf -kmer-size 31 -abundance-min 2
 
 For performance reasons we recommend to remove some sequencing errors already here by only including k-mers with abundance at least 2 (the -abundance-min 2 parameter).
 
-When BCALM 2 is finished, it produces the file `reads.unitigs.fa`, in which the de Bruijn graph's unitig node sequences as well as their connectivity are encoded in a FASTA-format. This file serves as input for MAGA.
+When BCALM 2 is finished, it produces the file `reads.unitigs.fa`, in which the de Bruijn graph's unitig node sequences as well as their connectivity are encoded in a FASTA-format. This file serves as input for SAMA.
 
 ### 2. Generating contigs with correctness guarantee
 
-MAGA uses the Detox method to estimate k-mer and k+1-mer distribution in the genome. Then it computes the abundancy thresholds and generates contigs.
+SAMA uses the Detox method to estimate k-mer and k+1-mer distribution in the genome. Then it computes the abundancy thresholds and generates contigs.
 
-The pipeline takes as input a de Bruijn graph in the FASTA-format of BCALM 2 (`reads.unitigs.fa`) as well as the original read set (`reads.mf`). MAGA can then be run as follows:
+The pipeline takes as input a de Bruijn graph in the FASTA-format of BCALM 2 (`reads.unitigs.fa`) as well as the original read set (`reads.mf`). SAMA can then be run as follows:
 
 ```bash
-maga -abundance-min 2 -misassembly-likelihood 1e-03 reads.unitigs.fa reads.mf
+sama -abundance-min 2 -misassembly-likelihood 1e-03 reads.unitigs.fa reads.mf
 ```
 
 The two mandatory input arguments are `reads.unitigs.fa` and `reads.mf`, in that order. All other flags or command line options should be listed prior to these two input arguments.
 
-When BCALM 2 was run using the `-abundance-min`  option, it is best to provide this information also to MAGA. When MAGA uses the Detox method to fit the error model to the data, it then knows that all k-mers that occur fewer times than the value provided by `abundance-min` are missing. It takes this into account when fitting the model to the data.
+When BCALM 2 was run using the `-abundance-min`  option, it is best to provide this information also to SAMA. When SAMA uses the Detox method to fit the error model to the data, it then knows that all k-mers that occur fewer times than the value provided by `abundance-min` are missing. It takes this into account when fitting the model to the data.
 
 Upon completion, the contigs are stored in file `output.fa`.
 
 ### 3. Advanced user information 
-The MAGA pipeline consists of 3 stages. Each stage outputs a number of intermediate files. When re-running MAGA (e.g. using different parameter settings), the existence of these intermediate files is checked. If they exist, stages 1 or 2 may be skipped. In order to force re-running stages 1, 2 or 3, simply remove the appropriate files: `rm *.st1` for stage 1 or  `rm *.st2` for stage 2. We will now explain the stages in more detail below.
+The SAMA pipeline consists of 3 stages. Each stage outputs a number of intermediate files. When re-running SAMA (e.g. using different parameter settings), the existence of these intermediate files is checked. If they exist, stages 1 or 2 may be skipped. In order to force re-running stages 1, 2 or 3, simply remove the appropriate files: `rm *.st1` for stage 1 or  `rm *.st2` for stage 2. We will now explain the stages in more detail below.
 
 #### Stage 1 (part of the Detox method)
 The input file `reads.unitigs.fa`, produced by BCALM 2 is read. Even though BCALM 2 provides average k-mer counts for each node (unitig), it does not provide (k+1)-mer counts for the arcs.
@@ -131,7 +131,7 @@ The thresholds for extension and their corresponding misassembly probabilities a
 Enter the test directory:
 
 ```bash
-cd MAGA/test/
+cd SAMA/test/
 ```
 Here you will find a set of reads in the `reads.fq` file and the corresponding read manifest file `reads.mf`.
 
@@ -140,9 +140,9 @@ Run BCALM 2:
 ```bash
 bcalm -in reads.mf -kmer-size 31 -abundance-min 2
 ```
-Now you will find the `reads.unitigs.fa` file in the test directory which includes the BCALM 2 output. Next you need to run MAGA:
+Now you will find the `reads.unitigs.fa` file in the test directory which includes the BCALM 2 output. Next you need to run SAMA:
 
 ```bash
-maga -abundance-min 2 -misassembly-likelihood 1e-03 reads.unitigs.fa reads.mf
+sama -abundance-min 2 -misassembly-likelihood 1e-03 reads.unitigs.fa reads.mf
 ```
-The contigs produced by MAGA are now in file `output.fa` in the test directory. You can also examine the abundance thresholds computed by MAGA in file `thresholds.list`.
+The contigs produced by SAMA are now in file `output.fa` in the test directory. You can also examine the abundance thresholds computed by SAMA in file `thresholds.list`.

@@ -1,6 +1,6 @@
 /******************************************************************************
  *   Copyright (C) 2024 Leena Salmela (leena.salmela@helsinki.fi)             *
- *   This file has been modified for MAGA                                     *
+ *   This file has been modified for SAMA                                     *
  *                                                                            *
  *   Copyright (C) 2014 - 2022 Jan Fostier (jan.fostier@ugent.be)             *
  *   This file is part of Detox                                               *
@@ -30,9 +30,9 @@ using namespace std;
 
 void Settings::printProgramVersion() const
 {
-        cout << "MAGA, a de Bruijn graph assembler with guaranteed correctness -- version "
-             << MAGA_MAJOR_VERSION << "." << MAGA_MINOR_VERSION
-             << "." << MAGA_PATCH_LEVEL << "\n";
+        cout << "SAMA, a de Bruijn graph assembler with guaranteed correctness -- version "
+             << SAMA_MAJOR_VERSION << "." << SAMA_MINOR_VERSION
+             << "." << SAMA_PATCH_LEVEL << "\n";
 
         cout << "Copyright (C) 2019-2022 Jan Fostier and Aranka Steyaert\n"
                 "Report bugs to Jan Fostier <jan.fostier@ugent.be>\n"
@@ -45,7 +45,7 @@ void Settings::printUsage() const
 {
         cout <<
 
-        "Usage: maga [options] unitigs.fa readfile\n\n  File "
+        "Usage: sama [options] unitigs.fa readfile\n\n  File "
         "\"unitigs.fa\" is the input de Bruijn graph produced by BCALM 2\n"
         "  File \"readfile\" contains a list of input FASTQ files\n\n"
 
@@ -259,8 +259,8 @@ Settings::Settings(int argc, char ** argv) : useQualFlag(false), approxInfFlag(f
                                     "be in range [0..255]");
         if (useQualFlag && abundanceMin == -1) {
                 cerr << "WARNING: no -abundance-min argument passed while using q-mers.\n"
-                     << "MAGA cannot automatically infer the correct value.\n"
-                     << "Please consider providing the appropriate -abudance-min argument to MAGA.\n";
+                     << "SAMA cannot automatically infer the correct value.\n"
+                     << "Please consider providing the appropriate -abudance-min argument to SAMA.\n";
         }
 
 	if (misassLh <= 0 || misassLh >= 1.0) {

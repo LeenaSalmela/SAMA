@@ -1,7 +1,7 @@
 # CMake compatibility issues: don't modify this, please!
 cmake_minimum_required(VERSION 2.6.3)
 
-project(MAGA)
+project(SAMA)
 
 # project version
 set(${PROJECT_NAME}_MAJOR_VERSION 0)
@@ -44,7 +44,7 @@ if (SPARSEHASH_FOUND)
     include_directories(${SPARSEHASH_INCLUDE_DIR})
 else (SPARSEHASH_FOUND)
     message(FATAL_ERROR "\nFATAL ERROR: The required Google SparseHash package"
-            " could not be found on this system.  Please refer to the MAGA "
+            " could not be found on this system.  Please refer to the SAMA "
             "manual for the Google Sparsehash installation instructions.  If "
             "you installed Google Sparsehash in a non-standard location "
             "(e.g. somewhere in your homedir), you can point cmake to the "
