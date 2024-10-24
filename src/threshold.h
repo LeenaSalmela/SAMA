@@ -36,11 +36,11 @@ class Thresholds
 
     int get(int a);
 
-  void computeThresholds(std::string filename, double epsilon);
+    void computeThresholds(std::string filename, double epsilon);
   
-    void writeThresholds(std::string filename);
+    void writeThresholds(std::string thresholdfile, std::string probfile);
 
-    void readThresholds(std::string filename);
+    void readThresholds(std::string thresholdfile, std::string probfile);
 };
 
 #endif

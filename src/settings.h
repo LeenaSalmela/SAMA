@@ -192,6 +192,13 @@ public:
                 return "thresholds.list";
         }
 
+        /**
+         * Get the probability filename
+         * @return The probability filename
+         */
+        std::string getProbFilename() const {
+                return "probs.list";
+        }
 
   
         /**

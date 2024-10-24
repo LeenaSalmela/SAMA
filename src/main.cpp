@@ -498,7 +498,7 @@ void stageThreshold(Settings& settings)
 
   th.computeThresholds("histogram.node.st2.dat", settings.getMisassLh());
 
-  th.writeThresholds(settings.getThresholdFilename());
+  th.writeThresholds(settings.getThresholdFilename(), settings.getProbFilename());
   
   cout << "Stage thresholding finished in " << Util::stopChronoStr() << endl;	
 }
@@ -518,9 +518,16 @@ void stageAssemble(Settings& settings)
     return;
   }
 
+  if (!Util::fileExists(settings.getProbFilename())) {
+    cout << "File " << settings.getProbFilename()
+	 << " does not exist. Compute the thresholds file and rerun.\n";
+    return;
+  }
+
+  
   // Read the thresholds
   Thresholds th;
-  th.readThresholds(settings.getThresholdFilename());
+  th.readThresholds(settings.getThresholdFilename(), settings.getProbFilename());
   
   DBGraph dBG(settings);
   string ifn = settings.getStage1GraphFilename();

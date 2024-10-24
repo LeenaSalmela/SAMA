@@ -22,6 +22,7 @@
 #include <tuple>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 Thresholds::Thresholds()
 {
@@ -33,6 +34,10 @@ Thresholds::Thresholds()
   prob.resize(max_a+1);
   for(int i = 0; i <= max_a; i++) {
     prob[i] = 0.0;
+  }
+  totP.resize(max_a+1);
+  for(int i = 0; i <= max_a; i++) {
+    totP[i] = NULL;
   }
 }
 
@@ -125,9 +130,9 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
     bool threshold_found = false;
     if (repeatP[a] == NULL)
       continue;
-    totP[a] = new double[a/2];
+    totP[a] = new double[a/2+1];
     //std::cout << "a: " << a << std::endl;
-    for(int ell = a/2+1; ell < a; ell++) {
+    for(int ell = a/2+1; ell <= a; ell++) {
       //std::cout << "  ell: " << ell << std::endl;
       double d_ell = (double) ell;
       double d_a = (double) a;
@@ -141,6 +146,10 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 	  totP[a][ell-a/2-1] += (d_k+1.0)*repeatP[a][k]*exp(-(d_k+1.0)/(2.0*d_a)*(d_ell-d_a*d_k/(d_k+1.0))*(d_ell-d_a*d_k/(d_k+1.0)));
 	}
 	//std::cout << "    totP: " << totP << std::endl;
+      }
+      // totP is an estimate so it can be >1, reset to 1 if so
+      if (totP[a][ell-a/2-1] > 1.0) {
+	totP[a][ell-a/2-1] = 1.0;
       }
       if (!threshold_found && totP[a][ell-a/2-1] < epsilon) {
 	th[a] = ell;
@@ -160,20 +169,34 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 }
   
 
-void Thresholds::writeThresholds(std::string filename)
+void Thresholds::writeThresholds(std::string thresholdfile, std::string probfile)
 {
-  std::ofstream file(filename);
+  std::ofstream file(thresholdfile);
 
   for(int a = 1; a <= max_a; a++) {
     file << a << " " << th[a] << " " << prob[a] << "\n";
   }
   file.close();
+
+  std::ofstream pfile(probfile);
+
+  for(int a = 1; a <= max_a; a++) {
+    if (totP[a] != NULL) {
+      pfile << a;
+      for(int ell = a/2+1; ell <= a; ell++) {
+	pfile << " " << totP[a][ell-a/2-1];
+      }
+      pfile << "\n";
+    }
+  }
+  pfile.close();
+
 }
 
 
-void Thresholds::readThresholds(std::string filename)
+void Thresholds::readThresholds(std::string thresholdfile, std::string probfile)
 {
-  std::ifstream file(filename);
+  std::ifstream file(thresholdfile);
   std::string cell;
   
   while(!file.eof())
@@ -201,5 +224,41 @@ void Thresholds::readThresholds(std::string filename)
     }
   }
   file.close();
+
+  std::ifstream pfile(probfile);
+  
+  while(!pfile.eof())
+  {
+    if (std::getline(pfile, cell, ' '))
+    {	
+      int a = std::stoi(cell);
+      
+      while (a > max_a) {
+	totP.resize(max_a*2+1);
+	for(int i = max_a+1; i <= max_a*2; i++) {
+	  totP[i] = NULL;
+	}
+	max_a = 2*max_a;
+      }
+      totP[a] = new double[a/2+1];
+      std::getline(pfile, cell);
+      char *buf = new char[cell.length()+1];
+      strncpy(buf, cell.c_str(), cell.length()+1);
+      buf[cell.length()] = '\0';
+      char *t = strtok(buf, " ");
+      int ell = 0;
+      while(t!= NULL) {
+	totP[a][ell] = atof(t);
+	ell++;
+	t = strtok(NULL, " ");
+      }
+      delete [] buf;
+    }
+  }
+  pfile.close();
+
+
 }
+
+
 
