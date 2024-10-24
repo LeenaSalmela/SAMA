@@ -28,6 +28,7 @@ class Thresholds
  private:
     std::vector<int> th;
     std::vector<double> prob;
+    std::vector<double *> totP;
     size_t max_a;
     
  public:

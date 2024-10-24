@@ -45,6 +45,8 @@ int Thresholds::get(int a)
   return th[a];
 }
 
+// Compute total probabilities for each [node_coverage, edge_coverage] pair
+// Deduce thresholds
 void Thresholds::computeThresholds(std::string filename, double epsilon) {
   std::ifstream file(filename);
   std::string cell;
@@ -58,8 +60,10 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   std::cout << epsilon << std::endl;
   
   repeatP.resize(max_a+1);
+  totP.resize(max_a+1);
   for(int a = 0; a <= max_a; a++) {
     repeatP[a] = NULL;
+    totP[a] = NULL;
   }
 
   bool min_cov_set = false;
@@ -94,10 +98,12 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
 	repeatP.resize(2*max_a+1);
 	th.resize(2*max_a+1);
 	prob.resize(2*max_a+1);
+	totP.resize(2*max_a+1);
 	for(int a = max_a+1; a <= 2*max_a; a++) {
 	  repeatP[a] = NULL;
 	  th[a] = a+10000;
 	  prob[a] = 0.0;
+	  totP[a] = NULL;
 	}
 	max_a = 2*max_a;
       }
@@ -116,29 +122,31 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   
   
   for(int a = min_cov; a <= max_cov; a++) {
+    bool threshold_found = false;
     if (repeatP[a] == NULL)
       continue;
+    totP[a] = new double[a/2];
     //std::cout << "a: " << a << std::endl;
     for(int ell = a/2+1; ell < a; ell++) {
       //std::cout << "  ell: " << ell << std::endl;
       double d_ell = (double) ell;
       double d_a = (double) a;
-      double totP = 2.0*repeatP[a][1]*exp(-(d_ell-d_a/2.0)*(d_ell-d_a/2.0)*2.0/d_a);
+      totP[a][ell-a/2-1] = 2.0*repeatP[a][1]*exp(-(d_ell-d_a/2.0)*(d_ell-d_a/2.0)*2.0/d_a);
       //std::cout << "    totP: " << totP << std::endl;
       for(int k = 2; k < 5; k++) {
 	double d_k = (double)k;
 	if (ell < d_k/(d_k+1)*a) {
-	  totP += repeatP[a][k];
+	  totP[a][ell-a/2-1] += repeatP[a][k];
 	} else {
-	  totP += (d_k+1.0)*repeatP[a][k]*exp(-(d_k+1.0)/(2.0*d_a)*(d_ell-d_a*d_k/(d_k+1.0))*(d_ell-d_a*d_k/(d_k+1.0)));
+	  totP[a][ell-a/2-1] += (d_k+1.0)*repeatP[a][k]*exp(-(d_k+1.0)/(2.0*d_a)*(d_ell-d_a*d_k/(d_k+1.0))*(d_ell-d_a*d_k/(d_k+1.0)));
 	}
 	//std::cout << "    totP: " << totP << std::endl;
       }
-      if (totP < epsilon) {
+      if (!threshold_found && totP[a][ell-a/2-1] < epsilon) {
 	th[a] = ell;
-	prob[a] = totP;
+	prob[a] = totP[a][ell-a/2-1];
 	//std::cout << "    Threshold!" << std::endl;
-	break;
+	threshold_found = true;
       }
     }
   }
