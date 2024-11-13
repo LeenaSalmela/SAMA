@@ -50,6 +50,24 @@ int Thresholds::get(int a)
   return th[a];
 }
 
+double Thresholds::getProb(int nodeCount, int arcCount) {
+
+  if (nodeCount > max_a) {
+    return 1.0;
+  }
+
+  if (arcCount-nodeCount/2-1 > nodeCount/2) {
+    return 1.0;
+  }
+
+  if (arcCount-nodeCount/2-1 < 0) {
+    return 0.0;
+  }
+
+  return totP[nodeCount][arcCount-nodeCount/2-1];
+}
+  
+
 // Compute total probabilities for each [node_coverage, edge_coverage] pair
 // Deduce thresholds
 void Thresholds::computeThresholds(std::string filename, double epsilon) {
@@ -126,7 +144,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   std::cout << "Estimated coverage: " << est_cov << std::endl;
   
   
-  for(int a = min_cov; a <= max_cov; a++) {
+  for(int a = 1; a <= max_cov; a++) {
     bool threshold_found = false;
     if (repeatP[a] == NULL)
       continue;

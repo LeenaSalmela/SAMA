@@ -618,6 +618,7 @@ void stageAssemble(Settings& settings)
 
   int id = 1;
   ofstream ofs("output.fa");
+  ofstream ofsp("output.prob");
   int breaks = 0;
   for(int i = 0; i < dBG.getNumNodes(); i++) {
     SSNode start = nodes[i];
@@ -628,6 +629,8 @@ void stageAssemble(Settings& settings)
       start.setFlag1(true);
       vector<NodeID> nodeSeq;
       string contig;
+      vector<double> fwdP;
+      vector<double> bwdP;
       nodeSeq.clear();
       nodeSeq.push_back(start.getNodeID());
       
@@ -671,6 +674,11 @@ void stageAssemble(Settings& settings)
 #ifndef AVG_COV
       // Write out the contig(s)
       contig.clear();
+      fwdP.clear();
+      bwdP.clear();
+      for(int i = 0; i < Kmer::getK()-1; i++) {
+	fwdP.push_back(0.0);
+      }
       for(size_t i = 0; i < nodeSeq.size(); i++) {
 	size_t start = 0;
 	SSNode n = dBG.getSSNode(nodeSeq[i]);
@@ -678,26 +686,67 @@ void stageAssemble(Settings& settings)
 	  contig = n.getSequence().substr(start, Kmer::getK()-1);
 	}
 	for(size_t end = 0; end < n.getMarginalLength()-1; end++) {
-	  if (n.getArcCount(end) < th.get(n.getCount(end))) {
+	  if (n.getArcCount(end) < th.get(n.getCount(end)) || n.getArcCount(end) < th.get(n.getCount(end+1))) {
 	    breaks++;
 	    contig.append(n.getSequence().substr(start+Kmer::getK()-1, end-start+1));
 	    if (contig.length() > Kmer::getK()) {
+	      for(int j = 0; j < Kmer::getK()-1; j++) {
+		bwdP.push_back(0.0);
+	      }
+	      if (contig.length()-1 != fwdP.size()) {
+		std::cout << "Mismatch in contig length and fwdP size: " <<  contig.length() << " " << fwdP.size() << std::endl; 
+	      }
+	      if (contig.length()-1 != bwdP.size()) {
+		std::cout << "Mismatch in contig length and bwdP size: " <<  contig.length() << " " << bwdP.size() << std::endl; 
+	      }
 	      ofs << ">contig_" << id << "\n";
 	      Util::writeSeqWrap(ofs, contig, 60);
+	      ofsp << ">contig_" << id << "_fwd\n";
+	      Util::writeProbWrap(ofsp, fwdP, 60);
+	      ofsp << ">contig_" << id << "_bwd\n";
+	      Util::writeProbWrap(ofsp, bwdP, 60);
 	      id++;
 	    }
 	    start = end+1;
 	    contig.clear();
+	    fwdP.clear();
+	    bwdP.clear();
+	    for(int j = 0; j < Kmer::getK()-1; j++) {
+	      fwdP.push_back(0.0);
+	    }
 	    contig = n.getSequence().substr(start, Kmer::getK()-1);
+	  } else {
+	    fwdP.push_back(th.getProb(n.getCount(end), n.getArcCount(end)));
+	    //std::cout << "internal: " << n.getCount(end) << " " << n.getArcCount(end) << " " << th.getProb(n.getCount(end), n.getArcCount(end)) << std::endl;
+	    bwdP.push_back(th.getProb(n.getCount(end+1), n.getArcCount(end)));
 	  }
 	}
 	if (start < n.getMarginalLength()-1) {
 	  contig.append(n.getSequence().substr(start+Kmer::getK()-1));
 	}
+	if (i < nodeSeq.size()-1){
+	  fwdP.push_back(th.getProb(n.getCount(n.getMarginalLength()-1), n.rightArc(nodeSeq[i+1])->getCov()));
+	  //std::cout << "external: " << n.getCount(n.getMarginalLength()-1) << " " << n.rightArc(nodeSeq[i+1])->getCov() << " " << th.getProb(n.getCount(n.getMarginalLength()-1), n.rightArc(nodeSeq[i+1])->getCov()) << std::endl;
+	  SSNode next = dBG.getSSNode(nodeSeq[i+1]);
+	  bwdP.push_back(th.getProb(next.getCount(0), n.rightArc(nodeSeq[i+1])->getCov()));
+	}
       }
       if (contig.length() > Kmer::getK()) {
+	for(int j = 0; j < Kmer::getK()-1; j++) {
+	  bwdP.push_back(0.0);
+	}
+	if (contig.length()-1 != fwdP.size()) {
+	  std::cout << "Mismatch in contig length and fwdP size: " <<  contig.length() << " " << fwdP.size() << std::endl; 
+	}
+	if (contig.length()-1 != bwdP.size()) {
+	  std::cout << "Mismatch in contig length and bwdP size: " <<  contig.length() << " " << bwdP.size() << std::endl; 
+	}
 	ofs << ">contig_" << id << "\n";
 	Util::writeSeqWrap(ofs, contig, 60);
+	ofsp << ">contig_" << id << "_fwd\n";
+	Util::writeProbWrap(ofsp, fwdP, 60);
+	ofsp << ">contig_" << id << "_bwd\n";
+	Util::writeProbWrap(ofsp, bwdP, 60);
 	id++;
       }
 	
@@ -713,7 +762,8 @@ void stageAssemble(Settings& settings)
   }
   std::cout << "Number of breaks due to coverage: " << breaks << std::endl;
   ofs.close();
-
+  ofsp.close();
+  
   cout << "Stage assemble finished in " << Util::stopChronoStr() << endl;
 
   //  dBG.writeContigs("output2.fa");

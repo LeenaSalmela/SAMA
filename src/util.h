@@ -19,6 +19,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+
 #include <string>
 #include <chrono>
 #include <ctime>
@@ -107,6 +108,22 @@ public:
         float getProb(char c) {
                 return lut[(int)c];
         }
+
+        /**
+         * Get Phred score encoded as ASCII character
+         * @param p Probability that nucleotide is incorrect
+         * @return Phred score encoded as ASCII character
+         */
+        char getPhred(double p, int base=33) {
+	  if (-10.0*log10(p) > 40) {
+	    return base+40;
+	  } else {
+	    return (char)(-10.0*log10(p)+base);
+	  }
+        }
+
+
+  
 };
 
 // ============================================================================
@@ -363,6 +380,21 @@ public:
                                  size_t wrap) {
                 for (size_t c = 0; c < s.size(); c += wrap)
                         ofs << s.substr(c, wrap) << "\n";
+        }
+
+        static void writeProbWrap(std::ostream& ofs, const std::vector<double>& p, size_t wrap) {
+                char *buf = new char[wrap+1];
+	  
+                for (size_t c = 0; c < p.size(); c +=wrap) {
+		  for(size_t i = 0; i < wrap && c+i < p.size(); i++) {
+		    buf[i] = phredConv.getPhred(p[c+i]);
+		  }
+		  if (c+wrap <= p.size())
+		    buf[wrap] = '\0';
+		  else
+		    buf[p.size() % wrap] = '\0';
+		  ofs << buf << "\n";
+		}
         }
 
         /**

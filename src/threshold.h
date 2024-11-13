@@ -35,7 +35,8 @@ class Thresholds
     Thresholds();
 
     int get(int a);
-
+    double getProb(int nodeCount, int arcCount);
+  
     void computeThresholds(std::string filename, double epsilon);
   
     void writeThresholds(std::string thresholdfile, std::string probfile);
