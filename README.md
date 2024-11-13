@@ -78,7 +78,7 @@ The two mandatory input arguments are `reads.unitigs.fa` and `reads.mf`, in that
 
 When BCALM 2 was run using the `-abundance-min`  option, it is best to provide this information also to SAMA. When SAMA uses the Detox method to fit the error model to the data, it then knows that all k-mers that occur fewer times than the value provided by `abundance-min` are missing. It takes this into account when fitting the model to the data.
 
-Upon completion, the contigs are stored in file `output.fa`.
+Upon completion, the contigs are stored in file `output.fa` and the misassembly probabilities as Phred scores in file `output.prob`. The latter file has two entries for each contig: one entry for forward probabilities and one for backward probabilities. Each entry starts with a fasta-like title in the format `>contig_<id>_<direction>` which is followed by the probabilities of the extension not being unique (i.e. being a misassembly). The first k-1 probabilities for forward sequence and the last k-1 probabilities for backward sequence are always minimal as these represent the connection between the bases in the first k-mer. The subsequent probabilities are the probabilities for the k+1 base extension of the previous k-mer not being unique.
 
 ### 3. Advanced user information 
 The SAMA pipeline consists of 3 stages. Each stage outputs a number of intermediate files. When re-running SAMA (e.g. using different parameter settings), the existence of these intermediate files is checked. If they exist, stages 1 or 2 may be skipped. In order to force re-running stages 1, 2 or 3, simply remove the appropriate files: `rm *.st1` for stage 1 or  `rm *.st2` for stage 2. We will now explain the stages in more detail below.
