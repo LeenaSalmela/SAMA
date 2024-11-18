@@ -26,7 +26,7 @@
 
 Thresholds::Thresholds()
 {
-  max_a = 1000;
+  max_a = 500;
   th.resize(max_a+1);
   for(int i = 0; i <= max_a; i++) {
     th[i] = i+10000;
@@ -115,7 +115,7 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
       for(int r = 1; r <= 5; r++) {
 	row[r-1] = row[r-1]/s;
       }
-      if (cov > max_a) {
+      while (cov > max_a) {
 	repeatP.resize(2*max_a+1);
 	th.resize(2*max_a+1);
 	prob.resize(2*max_a+1);
@@ -233,6 +233,10 @@ void Thresholds::readThresholds(std::string thresholdfile, std::string probfile)
 	for(int i = max_a+1; i <= max_a*2; i++) {
 	  prob[i] = 0.0;
 	}
+	totP.resize(max_a*2+1, NULL);
+	for(int i = max_a+1; i <= max_a*2; i++) {
+	  totP[i] = NULL;
+	}
 	max_a = 2*max_a;
       }
       th[a] = t;
@@ -248,13 +252,10 @@ void Thresholds::readThresholds(std::string thresholdfile, std::string probfile)
     if (std::getline(pfile, cell, ' '))
     {	
       int a = std::stoi(cell);
-      
-      while (a > max_a) {
-	totP.resize(max_a*2+1, NULL);
-	for(int i = max_a+1; i <= max_a*2; i++) {
-	  totP[i] = NULL;
-	}
-	max_a = 2*max_a;
+
+      if (a > max_a) {
+	std::cout << "Incompatible threshold and probability files" << std::endl;
+	exit(2);
       }
       totP[a] = new double[a/2+1];
       std::getline(pfile, cell);
