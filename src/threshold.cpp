@@ -26,7 +26,7 @@
 
 Thresholds::Thresholds()
 {
-  max_a = 500;
+  max_a = 1000;
   th.resize(max_a+1);
   for(int i = 0; i <= max_a; i++) {
     th[i] = i+10000;
@@ -83,10 +83,8 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
   std::cout << epsilon << std::endl;
   
   repeatP.resize(max_a+1);
-  totP.resize(max_a+1);
   for(int a = 0; a <= max_a; a++) {
     repeatP[a] = NULL;
-    totP[a] = NULL;
   }
 
   bool min_cov_set = false;
@@ -252,7 +250,7 @@ void Thresholds::readThresholds(std::string thresholdfile, std::string probfile)
       int a = std::stoi(cell);
       
       while (a > max_a) {
-	totP.resize(max_a*2+1);
+	totP.resize(max_a*2+1, NULL);
 	for(int i = max_a+1; i <= max_a*2; i++) {
 	  totP[i] = NULL;
 	}

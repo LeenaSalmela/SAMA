@@ -694,10 +694,10 @@ void stageAssemble(Settings& settings)
 		bwdP.push_back(0.0);
 	      }
 	      if (contig.length()-1 != fwdP.size()) {
-		std::cout << "Mismatch in contig length and fwdP size: " <<  contig.length() << " " << fwdP.size() << std::endl; 
+		std::cout << "Mismatch in contig length and fwdP size: " <<  contig.length() << " " << fwdP.size() << " " << "contig_" << id << std::endl; 
 	      }
 	      if (contig.length()-1 != bwdP.size()) {
-		std::cout << "Mismatch in contig length and bwdP size: " <<  contig.length() << " " << bwdP.size() << std::endl; 
+		std::cout << "Mismatch in contig length and bwdP size: " <<  contig.length() << " " << bwdP.size() << " " << "contig_" << id << std::endl; 
 	      }
 	      ofs << ">contig_" << id << "\n";
 	      Util::writeSeqWrap(ofs, contig, 60);
@@ -721,9 +721,7 @@ void stageAssemble(Settings& settings)
 	    bwdP.push_back(th.getProb(n.getCount(end+1), n.getArcCount(end)));
 	  }
 	}
-	if (start < n.getMarginalLength()-1) {
-	  contig.append(n.getSequence().substr(start+Kmer::getK()-1));
-	}
+	contig.append(n.getSequence().substr(start+Kmer::getK()-1));
 	if (i < nodeSeq.size()-1){
 	  fwdP.push_back(th.getProb(n.getCount(n.getMarginalLength()-1), n.rightArc(nodeSeq[i+1])->getCov()));
 	  //std::cout << "external: " << n.getCount(n.getMarginalLength()-1) << " " << n.rightArc(nodeSeq[i+1])->getCov() << " " << th.getProb(n.getCount(n.getMarginalLength()-1), n.rightArc(nodeSeq[i+1])->getCov()) << std::endl;
@@ -736,10 +734,10 @@ void stageAssemble(Settings& settings)
 	  bwdP.push_back(0.0);
 	}
 	if (contig.length()-1 != fwdP.size()) {
-	  std::cout << "Mismatch in contig length and fwdP size: " <<  contig.length() << " " << fwdP.size() << std::endl; 
+	  std::cout << "Mismatch in contig length and fwdP size: " <<  contig.length() << " " << fwdP.size() << " " << "contig_" << id << std::endl; 
 	}
 	if (contig.length()-1 != bwdP.size()) {
-	  std::cout << "Mismatch in contig length and bwdP size: " <<  contig.length() << " " << bwdP.size() << std::endl; 
+	  std::cout << "Mismatch in contig length and bwdP size: " <<  contig.length() << " " << bwdP.size() << " " << "contig_" << id << std::endl; 
 	}
 	ofs << ">contig_" << id << "\n";
 	Util::writeSeqWrap(ofs, contig, 60);
