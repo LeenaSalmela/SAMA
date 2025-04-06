@@ -29,6 +29,7 @@
 #include <cmath>
 #include <mutex>
 #include <cassert>
+#include <array>
 
 // ============================================================================
 // DEFINITIONS

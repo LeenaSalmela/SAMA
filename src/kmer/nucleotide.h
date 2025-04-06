@@ -21,6 +21,7 @@
 
 #include <string>
 #include <algorithm>
+#include <cstdint>
 
 // ============================================================================
 // DEFINITIONS

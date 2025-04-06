@@ -152,16 +152,28 @@ void Thresholds::computeThresholds(std::string filename, double epsilon) {
       //std::cout << "  ell: " << ell << std::endl;
       double d_ell = (double) ell;
       double d_a = (double) a;
-      totP[a][ell-a/2-1] = 2.0*repeatP[a][1]*exp(-(d_ell-d_a/2.0)*(d_ell-d_a/2.0)*2.0/d_a);
-      //std::cout << "    totP: " << totP << std::endl;
-      for(int k = 2; k < 5; k++) {
+      //totP[a][ell-a/2-1] = 2.0*repeatP[a][1]*exp(-(d_ell-d_a/2.0)*(d_ell-d_a/2.0)*2.0/d_a);  // Chernoff
+      totP[a][ell-a/2-1] = 0.0;
+      
+      //std::cout << "    totP: " << totP[a][ell-a/2-1] << std::endl;
+      for(int k = 1; k < 5; k++) {
 	double d_k = (double)k;
-	if (ell < d_k/(d_k+1)*a) {
+	if (ell <= d_k/(d_k+1.0)*a) {
 	  totP[a][ell-a/2-1] += repeatP[a][k];
 	} else {
-	  totP[a][ell-a/2-1] += (d_k+1.0)*repeatP[a][k]*exp(-(d_k+1.0)/(2.0*d_a)*(d_ell-d_a*d_k/(d_k+1.0))*(d_ell-d_a*d_k/(d_k+1.0)));
+	  //totP[a][ell-a/2-1] += (d_k+1.0)*repeatP[a][k]*exp(-(d_k+1.0)/(2.0*d_a)*(d_ell-d_a*d_k/(d_k+1.0))*(d_ell-d_a*d_k/(d_k+1.0))); // Chernoff
+	  
+	  if (a == ell) {
+	    totP[a][ell-a/2-1] += (d_k+1.0)*repeatP[a][k]*pow((d_k/(d_k+1)), a);
+	  } else {
+	    double aa = d_ell / d_a;
+	    double p = d_k/(d_k+1.0);
+	    double r = p*(1.0-aa) / (aa*(1.0-p));
+	    double Dap = aa*log(aa/p) + (1.0-aa)*log ((1.0-aa)/(1.0-p));
+	    totP[a][ell-a/2-1] += (d_k+1.0)*repeatP[a][k]*1.0/(1.0-r)* 1.0 / sqrt(2.0*M_PI*aa*(1.0-aa)*d_a) * exp(-d_a*Dap);
+	  }
 	}
-	//std::cout << "    totP: " << totP << std::endl;
+	//std::cout << "    totP: " << totP[a][ell-a/2-1] << std::endl;
       }
       // totP is an estimate so it can be >1, reset to 1 if so
       if (totP[a][ell-a/2-1] > 1.0) {
