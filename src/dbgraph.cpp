@@ -240,6 +240,9 @@ void DBGraph::loadBCalm (const string& filename)
         else
                 cout << "Kmer size is " << Kmer::getK() << endl;
 
+	if (Kmer::getK() % 2 != 1)
+                throw runtime_error("Kmer size must be odd");
+	  
 #ifndef AVG_COV
         for (NodeID id = 1; id <= numNodes; id++) {
 	  SSNode node = getSSNode(id);
